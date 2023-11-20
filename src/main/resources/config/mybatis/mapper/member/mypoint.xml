@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mypoint">
+	
+	<insert id="insert" parameterType="mypoint">
+		insert into mypoint values(mypoint_seq.nextval, #{m_seq}, #{p_seq}, #{point}, #{content_in, jdbcType=VARCHAR}, #{url_in, jdbcType=VARCHAR}, sysdate)
+	</insert>
+	
+	<select id="rvPoint" parameterType="mypoint" resultType="int">
+		select count(*) cnt from mypoint where url_in=#{url_in} and p_seq=#{p_seq}
+	</select>
+	
+	<select id="recomPoint" parameterType="mypoint" resultType="int">
+	</select>
+	
+	<!-- 포인트 부여 횟수 확인하가ㅣ -->
+	<select id="pointCount" parameterType="map" resultType="int">
+		select count(*) cnt from mypoint where ${table1} = #{value1} and ${table2} = #{value2}
+	</select>
+	
+	<!-- 내 포인트 확인 -->
+	<select id="mypoint" resultType="map" parameterType="int">
+		select p.p_content, p.p_url, mp.point, mp.content_in, mp.url_in, 
+		ceil(sysdate - mp.datetime -1) day, trunc(months_between(sysdate, mp.datetime)) monthdiff
+		from mypoint mp,point p
+		where mp.m_seq = #{m_seq}
+		and mp.p_seq = p.p_seq
+		order by mp.datetime desc
+	</select> 
+	
+	<!-- 나의 포인트 합산 -->
+	<select id="point" resultType="int" parameterType="int">
+		select nvl(sum(point),0) from mypoint where m_seq=#{m_seq}
+	</select>
+	
+	<!-- 폼 삭제 시 url 못 찾아가게 -->
+	<update id="p_updateUrl" parameterType="int">
+		update mypoint set url_in = null 
+		where p_seq in (select p_seq from point where p_url like '%/member/review/selectRV%') 
+		and url_in in (select r.rv_seq from review r, form f where f.f_seq = #{f_seq} and r.f_seq = f.f_seq)
+	</update>
+	
+	<update id="p_updateUrl2" parameterType="int">
+		update mypoint set url_in = null 
+		where p_seq in (select p_seq from point where p_url like '%/member/review/selectRV%') 
+		and url_in = #{rv_seq}
+	</update>
+	
+	<update id="p_supdateUrl" parameterType="int">
+		update mypoint set url_in = null 
+		where p_seq in (select p_seq from point where p_url like '%/solg/slogDetail%') 
+		and url_in = #{slog_seq}
+	</update>
+
+</mapper>
